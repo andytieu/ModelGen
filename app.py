@@ -130,6 +130,7 @@ def get_horns_model():
         },
         data=json.dumps({
             "image_url": image_url,
+            "preview_mesh": "hd",
         })
     )
     print(response_gen_mesh_session.text)
@@ -148,24 +149,31 @@ def get_horns_model():
             },
         )
         print(response_await_spins.text)
-        mesh_status = json.loads(response_await_spins.text)["data"].get("status")
+        # mesh_status = json.loads(response_await_spins.text)["data"].get("status")
 
+    # response_request_mesh = requests.post(
+    #     f"https://api.csm.ai:5566/image-to-3d-sessions/get-3d/{mesh_session_code}",
+    #     headers={
+    #         "x-api-key": os.environ['CSM_API_KEY'],
+    #         "Content-Type": "application/json",
+    #     },
+    #     data=json.dumps({
+    #         "selected_spin_index": 0,
+    #         "selected_spin": json.loads(response_await_spins.text)["data"]["spins"][0]["image_url"],
+    #         "image_url": json.loads(response_await_spins.text)["data"]["image_url"],
+    #         "coarse": False,
+    #     }),
+    # )
     response_request_mesh = requests.post(
-        f"https://api.csm.ai:5566/image-to-3d-sessions/get-3d/{mesh_session_code}",
+        f"https://api.csm.ai:5566/image-to-3d-sessions/get-3d/preview/{mesh_session_code}",
         headers={
             "x-api-key": os.environ['CSM_API_KEY'],
             "Content-Type": "application/json",
         },
-        data=json.dumps({
-            "selected_spin_index": 0,
-            "selected_spin": json.loads(response_await_spins.text)["data"]["spins"][0]["image_url"],
-            "image_url": json.loads(response_await_spins.text)["data"]["image_url"],
-            "coarse": False,
-        }),
+        data=json.dumps({}),
     )
     print(response_request_mesh.text)
     mesh_status = json.loads(response_request_mesh.text)["data"].get("status")
-    return response_request_mesh.text
 
     while mesh_status != "preview_done":
         time.sleep(POLL_TIMEOUT)
