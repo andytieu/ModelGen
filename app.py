@@ -84,7 +84,7 @@ def get_model():
         }),
     )
     # horns_prompt = " A horn that sprawls out from its forehead, twisting and turning in intricate whorls reminiscent of the bark of a maple tree. Each twirl and curl is adorned with a subtle, warm hue that deepens towards the base, resembling the rich autumn colors of a maple leaf. The horn's texture is rough and gnarled, evoking the ridged surface of a maple tree bark."
-    [horns_prompt, eyes_prompt] = json.loads(response_llm.text)["response"].split("\n")[0]
+    [horns_prompt, eyes_prompt] = json.loads(response_llm.text)["response"].split("\n")
     
     print([horns_prompt, eyes_prompt])
     return json.dumps([
@@ -136,7 +136,6 @@ def gen_mesh_url(prompt: str):
         },
         data=json.dumps({
             "image_url": image_url,
-            "preview_mesh": "hd",
         })
     )
     print(response_gen_mesh_session.text)
@@ -176,7 +175,10 @@ def gen_mesh_url(prompt: str):
             "x-api-key": os.environ['CSM_API_KEY'],
             "Content-Type": "application/json",
         },
-        data=json.dumps({}),
+        data=json.dumps({
+            "selected_spin_index": 0,
+            "selected_spin": json.loads(response_await_spins.text)["data"]["spins"][0]["image_url"],
+        }),
     )
     print(response_request_mesh.text)
     mesh_status = json.loads(response_request_mesh.text)["data"].get("status")
