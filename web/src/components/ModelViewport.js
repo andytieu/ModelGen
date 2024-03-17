@@ -1,5 +1,5 @@
 import {Canvas, useFrame} from '@react-three/fiber';
-import {MarchingCubes, MarchingCube, Environment, Bounds, CameraControls} from '@react-three/drei';
+import {MarchingCubes, MarchingCube, Environment, Bounds, CameraControls, Sphere} from '@react-three/drei';
 import { CreatureBody } from './creature-body/CreatureBody';
 
 export const ModelViewport = () => {
@@ -12,11 +12,17 @@ export const ModelViewport = () => {
             <pointLight position={[-1, 1, 0.5]} intensity={1} />
             <color attach="background" args={["#f0f0f0"]} />
 
-            <MarchingCubes resolution={80} maxPolyCount={100_000} enableColors>
+            {/* <MarchingCubes resolution={80} maxPolyCount={100_000} enableColors>
                 <meshStandardMaterial vertexColors thickness={0.15} roughness={0} />
-                <CreatureBody params={[0.5, 1, [1, 1, 1]]} />
-                {/* <MarchingCube strength={0.25} subtract={2} color={"#00f"} position={[0.2, 0.2, 0.2]} /> */}
-            </MarchingCubes>
+                <CreatureBody params={[1, 1.5, [1, 1, 1]]} />
+                {/* <MarchingCube strength={0.25} subtract={2} color={"#00f"} position={[0.2, 0.2, 0.2]} /> *}
+            </MarchingCubes> */}
+
+            <group>
+                <meshStandardMaterial vertexColors thickness={0.15} roughness={0} />
+
+                <Sphere args={[1]} />
+            </group>
         </Canvas>
     )
 };

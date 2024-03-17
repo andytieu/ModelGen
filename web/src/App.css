@@ -6,6 +6,12 @@ body {
 .App {
   height: 100vh;
   text-align: center;
+  display: grid;
+  place-items: center;
+}
+
+.App > * {
+  grid-area: 1/1;
 }
 
 .App-logo {
