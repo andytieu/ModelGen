@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, send_from_directory, request
 from dotenv import load_dotenv
 import requests
 import json
@@ -6,7 +6,7 @@ import os
 
 load_dotenv()
 
-app = Flask(__name__, template_folder="web/public")
+app = Flask(__name__, template_folder="web/build", static_folder="web/build/static")
 
 AI_POST_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
@@ -20,7 +20,7 @@ AI_POST_HEADERS = {
     "Sec-GPC": "1",
 }
 
-@app.route('/')
+@app.route("/")
 def index():
     return render_template("index.html")
 
