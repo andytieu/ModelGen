@@ -35,7 +35,7 @@ def get_model_attrs():
         headers=AI_POST_HEADERS,
         data=json.dumps({
             "model": "modelgen:latest",
-            "prompt": "lizard caterpillar",
+            "prompt": request.args.get("keywords"),
             "stream": False,
         }),
     )
@@ -50,7 +50,25 @@ def get_model_attrs():
         }),
     )
 
-    return response_final.text
+    response_text_final: str = json.loads(response_final.text)["response"]
+
+    
+    # parse for the first set of brackets
+
+    bracket_level = 0
+    start_bracket_index = -1
+    for i, char in enumerate(response_text_final):
+        if char == "[":
+            bracket_level += 1
+            if start_bracket_index == -1:
+                start_bracket_index = i
+        elif char == "]":
+            bracket_level -= 1
+            if bracket_level == 0:
+                return response_text_final[start_bracket_index:i + 1]
+            
+    return "TODO didn't find a matched set of brackets"
+
 
 def main():
     app.run(debug=True)
