@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import requests
 import json
 import os
+import time
 
 load_dotenv()
 
@@ -69,6 +70,127 @@ def get_model_attrs():
             
     return "TODO didn't find a matched set of brackets"
 
+
+POLL_TIMEOUT = 5
+@app.route("/model/horns")
+def get_horns_model():
+    # response_llm = requests.post(
+    #     "http://localhost:3000/ollama/api/generate",
+    #     headers=AI_POST_HEADERS,
+    #     data=json.dumps({
+    #         "model": "modelgen-new:latest",
+    #         "prompt": request.args.get("keywords"),
+    #         "stream": False,
+    #     }),
+    # )
+    horns_prompt = " A horn that sprawls out from its forehead, twisting and turning in intricate whorls reminiscent of the bark of a maple tree. Each twirl and curl is adorned with a subtle, warm hue that deepens towards the base, resembling the rich autumn colors of a maple leaf. The horn's texture is rough and gnarled, evoking the ridged surface of a maple tree bark."
+    #json.loads(response_llm.text)["response"].split("\n")[0]
+    print(horns_prompt)
+    
+
+    # image
+    response_gen_image_session = requests.post(
+        "https://api.csm.ai:5566/tti-sessions",
+        headers={
+            "x-api-key": os.environ['CSM_API_KEY'],
+            "Content-Type": "application/json",
+        },
+        data=json.dumps({
+            "prompt": horns_prompt,
+        }),
+    )
+    print(response_gen_image_session.text)
+    image_session_code = json.loads(response_gen_image_session.text)["data"]["session_code"]
+    print(image_session_code)
+
+    # wait for image to complete
+    image_status = ""
+    while image_status != "completed":
+        time.sleep(POLL_TIMEOUT)
+
+        response_get_image = requests.get(
+            f"https://api.csm.ai:5566/tti-sessions/{image_session_code}",
+            headers={
+                "x-api-key": os.environ['CSM_API_KEY'],
+                "Content-Type": "application/json",
+            },
+        )
+        print(response_get_image.text)
+        image_status = json.loads(response_get_image.text)["data"]["status"]
+
+    image_url = json.loads(response_get_image.text)["data"]["image_url"]
+    print(image_url)
+
+    # mesh
+    response_gen_mesh_session = requests.post(
+        "https://api.csm.ai:5566/image-to-3d-sessions",
+        headers={
+            "x-api-key": os.environ['CSM_API_KEY'],
+            "Content-Type": "application/json",
+        },
+        data=json.dumps({
+            "image_url": image_url,
+        })
+    )
+    print(response_gen_mesh_session.text)
+    mesh_session_code = json.loads(response_gen_mesh_session.text)["data"]["session_code"]
+    print(mesh_session_code)
+
+    mesh_status = ""
+    while mesh_status != "spin_generate_done":
+        time.sleep(POLL_TIMEOUT)
+
+        response_await_spins = requests.get(
+            f"https://api.csm.ai:5566/image-to-3d-sessions/{mesh_session_code}",
+            headers={
+                "x-api-key": os.environ['CSM_API_KEY'],
+                "Content-Type": "application/json",
+            },
+        )
+        print(response_await_spins.text)
+        mesh_status = json.loads(response_await_spins.text)["data"].get("status")
+
+    response_request_mesh = requests.post(
+        f"https://api.csm.ai:5566/image-to-3d-sessions/get-3d/{mesh_session_code}",
+        headers={
+            "x-api-key": os.environ['CSM_API_KEY'],
+            "Content-Type": "application/json",
+        },
+        data=json.dumps({
+            "selected_spin_index": 0,
+            "selected_spin": json.loads(response_await_spins.text)["data"]["spins"][0]["image_url"],
+            "image_url": json.loads(response_await_spins.text)["data"]["image_url"],
+            "coarse": False,
+        }),
+    )
+    print(response_request_mesh.text)
+    mesh_status = json.loads(response_request_mesh.text)["data"].get("status")
+    return response_request_mesh.text
+
+    while mesh_status != "preview_done":
+        time.sleep(POLL_TIMEOUT)
+
+        response_await_mesh = requests.get(
+            f"https://api.csm.ai:5566/image-to-3d-sessions/{mesh_session_code}",
+            headers={
+                "x-api-key": os.environ['CSM_API_KEY'],
+                "Content-Type": "application/json",
+            },
+        )
+        print(response_await_mesh.text)
+        mesh_status = json.loads(response_await_mesh.text)["data"].get("status")
+
+    response_get_mesh = requests.get(
+        f"https://api.csm.ai:5566/image-to-3d-sessions/get-mesh/{mesh_session_code}",
+        headers={
+            "x-api-key": os.environ['CSM_API_KEY'],
+            "Content-Type": "application/json",
+        },
+    )
+    mesh_url = json.loads(response_get_mesh.text)["data"][0]["preview_mesh_url_glb"]
+    print(mesh_url)
+
+    return mesh_url
 
 def main():
     app.run(debug=True)
