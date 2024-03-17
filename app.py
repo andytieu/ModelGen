@@ -25,9 +25,9 @@ AI_POST_HEADERS = {
 def index():
     return render_template("index.html")
 
-@app.route("/model", methods=["POST"])
-def model_route():
-    return request.get_json()
+# @app.route("/model", methods=["POST"])
+# def model_route():
+#     return request.get_json()
     
 @app.route("/model_attrs")
 def get_model_attrs():
@@ -72,22 +72,28 @@ def get_model_attrs():
 
 
 POLL_TIMEOUT = 5
-@app.route("/model/horns")
-def get_horns_model():
-    # response_llm = requests.post(
-    #     "http://localhost:3000/ollama/api/generate",
-    #     headers=AI_POST_HEADERS,
-    #     data=json.dumps({
-    #         "model": "modelgen-new:latest",
-    #         "prompt": request.args.get("keywords"),
-    #         "stream": False,
-    #     }),
-    # )
-    horns_prompt = " A horn that sprawls out from its forehead, twisting and turning in intricate whorls reminiscent of the bark of a maple tree. Each twirl and curl is adorned with a subtle, warm hue that deepens towards the base, resembling the rich autumn colors of a maple leaf. The horn's texture is rough and gnarled, evoking the ridged surface of a maple tree bark."
-    #json.loads(response_llm.text)["response"].split("\n")[0]
-    print(horns_prompt)
+@app.route("/model/")
+def get_model():
+    response_llm = requests.post(
+        "http://localhost:3000/ollama/api/generate",
+        headers=AI_POST_HEADERS,
+        data=json.dumps({
+            "model": "modelgen-new:latest",
+            "prompt": request.args.get("keywords"),
+            "stream": False,
+        }),
+    )
+    # horns_prompt = " A horn that sprawls out from its forehead, twisting and turning in intricate whorls reminiscent of the bark of a maple tree. Each twirl and curl is adorned with a subtle, warm hue that deepens towards the base, resembling the rich autumn colors of a maple leaf. The horn's texture is rough and gnarled, evoking the ridged surface of a maple tree bark."
+    [horns_prompt, eyes_prompt] = json.loads(response_llm.text)["response"].split("\n")[0]
     
+    print([horns_prompt, eyes_prompt])
+    return json.dumps([
+        gen_mesh_url(horns_prompt),
+        gen_mesh_url(eyes_prompt),
+    ])
 
+
+def gen_mesh_url(prompt: str):
     # image
     response_gen_image_session = requests.post(
         "https://api.csm.ai:5566/tti-sessions",
@@ -96,7 +102,7 @@ def get_horns_model():
             "Content-Type": "application/json",
         },
         data=json.dumps({
-            "prompt": horns_prompt,
+            "prompt": prompt,
         }),
     )
     print(response_gen_image_session.text)
